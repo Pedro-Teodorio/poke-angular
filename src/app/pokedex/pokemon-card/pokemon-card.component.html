@@ -1,0 +1,8 @@
+<a [routerLink]="['/pokedex', pokemon.name]" class="text-decoration-none text-dark">
+  <div class="card h-100 text-center">
+    <img [src]="pokemon.sprites.other['official-artwork'].front_default" class="card-img-top pokemon-image pt-2" [alt]="pokemon.name">
+    <div class="card-body">
+      <h5 class="card-title pokemon-name">{{ pokemon.name }}</h5>
+    </div>
+  </div>
+</a>

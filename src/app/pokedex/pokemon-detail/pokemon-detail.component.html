@@ -1,0 +1,41 @@
+<div class="container mt-4" *ngIf="pokemon$ | async as pokemon">
+  <div class="row">
+    <div class="col-md-6 offset-md-3">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h1 class="pokemon-name mb-0">{{ pokemon.name }}</h1>
+          <a routerLink="/pokedex" class="btn btn-secondary">Voltar</a>
+        </div>
+        <div class="card-body">
+          <div class="text-center mb-4 pokemon-image-bg p-3">
+            <img [src]="pokemon.sprites.other['official-artwork'].front_default" [alt]="pokemon.name" class="img-fluid" style="max-height: 300px;">
+          </div>
+
+          <div class="mb-3">
+            <h5>Types</h5>
+            <span *ngFor="let type of pokemon.types" class="badge bg-primary me-1 type-badge">{{ type.type.name }}</span>
+          </div>
+
+          <div class="row mb-3 text-center">
+            <div class="col">
+              <h5>Height</h5>
+              <p>{{ pokemon.height / 10 }} m</p>
+            </div>
+            <div class="col">
+              <h5>Weight</h5>
+              <p>{{ pokemon.weight / 10 }} kg</p>
+            </div>
+          </div>
+
+          <h5>Base Stats</h5>
+          <ul class="list-group">
+            <li *ngFor="let stat of pokemon.stats" class="list-group-item d-flex justify-content-between align-items-center">
+              <span class="stat-name">{{ stat.stat.name }}</span>
+              <span class="badge bg-info rounded-pill">{{ stat.base_stat }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
