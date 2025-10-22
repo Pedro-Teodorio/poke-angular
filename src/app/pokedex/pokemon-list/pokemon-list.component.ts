@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { PokemonService } from '../../core/services/pokemon.service';
 import { PokemonCardComponent } from '../pokemon-card/pokemon-card.component';
 import { Pokemon, NamedApiResource } from '../../core/models';
-import { Observable, Subject, BehaviorSubject, switchMap, debounceTime, distinctUntilChanged, combineLatest, startWith, map, shareReplay, tap } from 'rxjs';
+import { Observable, BehaviorSubject, switchMap, debounceTime, distinctUntilChanged, combineLatest, startWith, map, shareReplay, tap, of } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -31,12 +31,22 @@ export class PokemonListComponent implements OnInit {
   pokemons$!: Observable<Pokemon[]>;
   types$: Observable<NamedApiResource[]> = this.pokemonService.getTypes();
   
+  // All pokemons for client-side search
+  private allPokemons: Pokemon[] = [];
+
   // Pagination
   limit = 20;
   currentPage = 1;
   totalPokemons = 0;
 
   ngOnInit(): void {
+    // Fetch all pokemons for client-side searching
+    this.pokemonService.getAllPokemons().pipe(
+      switchMap(response => this.pokemonService.getPokemonDetailsList(response.results))
+    ).subscribe(pokemons => {
+      this.allPokemons = pokemons;
+    });
+
     const search$ = this.searchSubject.pipe(
       debounceTime(300),
       distinctUntilChanged()
@@ -48,22 +58,29 @@ export class PokemonListComponent implements OnInit {
     const combined$ = combineLatest([search$, type$, page$]).pipe(
       switchMap(([searchTerm, type, page]) => {
         if (searchTerm) {
-          // Search functionality: fetch single pokemon
-          return this.pokemonService.getPokemonDetails(searchTerm.toLowerCase()).pipe(
-            map(p => ({ results: [p], count: 1 }))
+          const filteredPokemons = this.allPokemons.filter(p => 
+            p.name.toLowerCase().includes(searchTerm.toLowerCase())
           );
+          return of({ results: filteredPokemons, count: filteredPokemons.length });
         } else if (type) {
-          // Type filter: fetch all of a type
           return this.pokemonService.getPokemonsByType(type).pipe(
             map(results => ({ results, count: results.length }))
           );
         } else {
-          // Paginated list
           return this.pokemonService.getPokemons(page * this.limit, this.limit);
         }
       }),
       tap(response => this.totalPokemons = response.count),
-      switchMap(response => this.pokemonService.getPokemonDetailsList(response.results as NamedApiResource[])),
+      switchMap(response => {
+        if (response.results.length > 0) {
+          // If results are already Pokemon objects (from search), just return them
+          if (response.results[0].hasOwnProperty('sprites')) {
+            return of(response.results as Pokemon[]);
+          }
+          return this.pokemonService.getPokemonDetailsList(response.results as NamedApiResource[]);
+        }
+        return of([]); // Retorna vazio se não houver resultados
+      }),
       shareReplay(1)
     );
 

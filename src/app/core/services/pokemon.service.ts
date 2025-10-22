@@ -40,4 +40,8 @@ export class PokemonService {
       map(response => response.pokemon.map((p: any) => p.pokemon))
     );
   }
+
+  getAllPokemons(): Observable<ApiListResponse<NamedApiResource>> {
+    return this.getPokemons(0, 1500); // Fetch all pokemons
+  }
 }
